@@ -10,18 +10,30 @@ import MarkdownItFootnote from 'markdown-it-footnote'
 
 const markdownIt = new MarkdownIt({
   html: true,
+  breaks: true,
 })
+
+const BAD_PROTO_RE = /^(vbscript|javascript|data):/
+const GOOD_DATA_RE = /^data:image\/(gif|png|jpeg|webp);/
+
+markdownIt.validateLink = function (url) {
+  url = url.trim().toLowerCase()
+
+  return BAD_PROTO_RE.test(url) ? (!!GOOD_DATA_RE.test(url)) : true
+}
 
 markdownIt.use(MarkdownItKatex)
 markdownIt.use(markdownItTocAndAnchor, {
   anchorLink: false,
 })
 markdownIt.use(MarkdownItTaskLists, {
-  label: true, labelAfter: true,
+  label: true,
+  labelAfter: true,
 })
 markdownIt.use(MarkdownItMark)
 markdownIt.use(MarkdownItSup)
 markdownIt.use(MarkdownItSub)
 markdownIt.use(MarkdownItAbbr)
 markdownIt.use(MarkdownItFootnote)
+
 export default markdownIt

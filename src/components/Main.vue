@@ -11,27 +11,27 @@
         </div>
         <a-menu mode="inline" :defaultSelectedKeys="['articles']" @click="clickMenu">
           <a-menu-item key="articles">
-            <a-icon type="file-text" />
+            <i class="zwicon-document menu-icon"></i>
             <span class="nav-text">{{ $t('article') }}</span>
           </a-menu-item>
           <a-menu-item key="menu">
-            <a-icon type="bars" />
+            <i class="zwicon-grid menu-icon"></i>
             <span class="nav-text">{{ $t('menu') }}</span>
           </a-menu-item>
           <a-menu-item key="tags">
-            <a-icon type="tags" />
+            <i class="zwicon-price-tag menu-icon"></i>
             <span class="nav-text">{{ $t('tag') }}</span>
           </a-menu-item>
           <a-menu-item key="theme">
-            <a-icon type="picture" />
+            <i class="zwicon-image-wide menu-icon"></i>
             <span class="nav-text">{{ $t('theme') }}</span>
           </a-menu-item>
           <a-menu-item key="setting">
-            <a-icon type="setting" />
+            <i class="zwicon-cog menu-icon"></i>
             <span class="nav-text">{{ $t('setting') }}</span>
           </a-menu-item>
           <a-menu-item key="system">
-            <a-icon type="desktop" />
+            <i class="zwicon-desktop menu-icon"></i>
             <span class="nav-text">{{ $t('system') }}</span>
           </a-menu-item>
         </a-menu>
@@ -40,7 +40,8 @@
         <a-button class="preview-btn" icon="eye" block @click="preview">{{ $t('preview') }}</a-button>
         <a-button class="publish-btn" icon="sync" block type="primary" :loading="publishLoading" @click="publish">{{ $t('syncSite') }}</a-button>
         <div class="version-container" :class="{ 'version-dot': hasUpdate }">
-          <span>- {{ version }}</span>
+          <span>v {{ version }}</span>
+          <i class="zwicon-web web-btn" @click="goWeb" v-if="site.setting.domain"></i>
           <a-tooltip title="🌟Star 支持作者！">
             <a-icon type="github" style="font-size: 14px; cursor: pointer;" @click="openInBrowser('https://github.com/getgridea/gridea')" />
           </a-tooltip>
@@ -49,7 +50,9 @@
     </a-layout-sider>
     <a-layout class="right-container">
       <div class="content">
-        <router-view></router-view>
+        <keep-alive>
+          <router-view></router-view>
+        </keep-alive>
       </div>
     </a-layout>
   </a-layout>
@@ -66,7 +69,7 @@ import * as pkg from '../../package.json'
 
 @Component
 export default class App extends Vue {
-  @State('site') site!: any
+  @State('site') site!: Site
 
   @Action('site/updateSite') updateSite!: (siteData: Site) => void
 
@@ -135,6 +138,12 @@ export default class App extends Vue {
     shell.openExternal(url)
   }
 
+  goWeb() {
+    if (this.site.setting.domain) {
+      shell.openExternal(this.site.setting.domain)
+    }
+  }
+
   public async checkUpdate() {
     const res = await axios.get('https://api.github.com/repos/getgridea/gridea/releases/latest')
     if (res.status === 200) {
@@ -189,6 +198,9 @@ export default class App extends Vue {
 .sider {
   background: @primary-bg;
   // background: linear-gradient(to bottom, #434343, #000000);
+  &::-webkit-scrollbar {
+    width: 0;
+  }
 }
 
 /deep/ .ant-menu {
@@ -224,12 +236,12 @@ export default class App extends Vue {
 .right-container {
   background: #fff;
   margin-left: 8px 8px 8px 208px;
-  padding: 8px;
+  padding: 8px 16px 8px 8px;
   position: absolute;
   top: 8px;
   bottom: 8px;
   left: 208px;
-  right: 8px;
+  right: 0px;
 }
 .version-container {
   display: flex;
@@ -272,5 +284,19 @@ export default class App extends Vue {
     background: #252525;
     border: none;
   }
+}
+
+.web-btn {
+  font-size: 16px;
+  cursor: pointer;
+  &:hover {
+    color: @link-color;
+  }
+}
+
+.menu-icon {
+  font-size: 17px;
+  margin-right: 8px;
+  font-weight: 400;
 }
 </style>

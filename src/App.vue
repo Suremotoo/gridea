@@ -24,11 +24,11 @@ export default class App extends Vue {
   /* Global CSS */
   body {
     background: #fff;
-    color: #434343;
+    color: #41464b;
   }
 
   ::-webkit-scrollbar{
-    width: 0px;
+    width: 8px;
     height: 6px;
     border-radius: 4px;
     background-color: #fff;

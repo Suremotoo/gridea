@@ -1,9 +1,13 @@
-# Gridea
-
-**旧称 Hve Notes**
-
 <div align="center">
-  <img src="public/app-icons/gridea.png"  width="80px" height="80px">
+  <a href="https://gridea.dev">
+    <img src="public/app-icons/gridea.png"  width="80px" height="80px">
+  </a>
+  <h1 align="center">
+    Gridea
+  </h1>
+  <h3 align="center">
+    一个静态博客写作客户端
+  </h3>
 
   [下 载](https://github.com/getgridea/gridea/releases) | [主 页](http://hvenotes.fehey.com/)
 
@@ -23,13 +27,12 @@
 
 <div align="center">
   <img src="gridea-app.png">
-
 </div>
 
 ## 依赖
 **⚠️需要安装 [git](https://git-scm.com/downloads) 并且可以使用命令 `git` 调用它。**
 
-[English](https://github.com/getgridea/gridea/blob/master/README.md) | 简体中文  
+[English](https://github.com/getgridea/gridea/blob/master/README.md) | 简体中文 | [繁體中文](https://github.com/getgridea/gridea/blob/master/README-zh_TW.md)
 
 **[更新日志](https://github.com/getgridea/gridea/blob/master/CHANGELOG.md)**  
 
@@ -52,7 +55,7 @@
 
 💬  你可以进行简单的配置，接入 [Gitalk](https://github.com/gitalk/gitalk) 或 [DisqusJS](https://github.com/SukkaW/DisqusJS) 评论系统  
 
-🇬🇧  你可以使用**中文简体**或**英语**  
+🇬🇧  你可以使用**中文简体**、**中文繁体**、**英语**  
 
 🌁  你可以任意使用应用内默认主题或任意第三方主题，强大的主题自定义能力  
 
@@ -67,6 +70,7 @@
 😘 Enjoy~
 
 ## 开发
+如果你想贡献代码，请提前参阅[贡献指南](https://github.com/getgridea/gridea/wiki/%E8%B4%A1%E7%8C%AE%E6%8C%87%E5%8D%97)
 ``` shell
 $ # Node version > v10.0.0 is requied
 $ git clone https://github.com/getgridea/gridea.git
