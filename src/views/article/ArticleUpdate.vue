@@ -3,29 +3,32 @@
     <div class="page-title">
       <a-row type="flex" justify="end">
         <a-button class="btn" @click="postSettingsVisible = true">{{ $t('postSettings') }}</a-button>
-        <a-button class="btn" @click="close">{{ $t('cancel') }}</a-button>
+        <a-button class="btn" @click="close">{{ $t('back') }}</a-button>
         <a-button class="btn" :disabled="!canSubmit" @click="saveDraft">{{ $t('saveDraft') }}</a-button>
         <a-button class="btn" type="primary" :disabled="!canSubmit" @click="savePost">{{ $t('save') }}</a-button>
       </a-row>
     </div>
     <div class="page-content">
-      <a-row :gutter="16">
-        <a-col :span="16" :offset="4">
-          <div class="tip-text">{{ $t('editorTip') }}</div>
-          <div class="editor-container">
+      <div class="editor-wrapper">
+        <div class="tip-text">{{ $t('editorTip') }}</div>
+        <div class="editor-container">
+          <div class="post-title-container">
             <a-input class="post-title" size="large" :placeholder="$t('title')" v-model="form.title" @change="handleTitleChange"></a-input>
-            <markdown-editor
-              id="markdown-editor"
-              ref="editor"
-              class="md-editor"
-              :configs="configs"
-              preview-class="markdown-body"
-              v-model="form.content"
-              @click.native.capture="preventDefault($event)"
-            ></markdown-editor>
           </div>
-        </a-col>
-      </a-row>
+          <markdown-editor
+            id="markdown-editor"
+            ref="editor"
+            class="md-editor"
+            :configs="configs"
+            preview-class="markdown-body"
+            v-model="form.content"
+            @click.native.capture="preventDefault($event)"
+          ></markdown-editor>
+        </div>
+        <div class="footer-info">
+          写作于 <a @click.prevent="openPage('https://gridea.dev')" class="link">Gridea</a>
+        </div>
+      </div>
 
       <a-drawer
         :title="$t('postSettings')"
@@ -93,6 +96,8 @@
 
       <!-- 编辑器点击图片上传用 -->
       <input ref="uploadInput" class="upload-input" type="file" accept="image/*" @change="fileChangeHandler">
+
+      <span class="save-tip">{{ postStatusTip }}</span>
     </div>
   </div>
 </template>
@@ -101,7 +106,9 @@
 import {
   ipcRenderer, Event, shell, clipboard, remote,
 } from 'electron'
-import { Vue, Component, Prop } from 'vue-property-decorator'
+import {
+  Vue, Component, Prop, Watch,
+} from 'vue-property-decorator'
 import { State } from 'vuex-class'
 import shortid from 'shortid'
 import moment from 'moment'
@@ -180,6 +187,8 @@ export default class ArticleUpdate extends Vue {
 
   activeKey = ['1']
 
+  postStatusTip = ''
+
   get dateLocale() {
     return this.$root.$i18n.locale === 'zhHans' ? 'zh-cn' : 'en-us'
   }
@@ -202,6 +211,9 @@ export default class ArticleUpdate extends Vue {
   mounted() {
     this.buildCurrentForm()
     this.initEditor()
+    ipcRenderer.on('click-menu-save', (event: Event, data: any) => {
+      this.normalSavePost()
+    })
   }
 
   buildCurrentForm() {
@@ -253,12 +265,12 @@ export default class ArticleUpdate extends Vue {
     return false
   }
 
-  cancel() {
-    this.close()
-  }
-
   close() {
     this.$emit('close')
+  }
+
+  updatePostSavedStatus() {
+    this.postStatusTip = `${this.$t('savedIn')} ${moment().format('HH:mm:ss')}`
   }
 
   handleTitleChange(val: string) {
@@ -311,7 +323,7 @@ export default class ArticleUpdate extends Vue {
     return true
   }
 
-  formatForm(published: boolean) {
+  formatForm(published?: boolean) {
     this.buildFileName()
     const valid = this.checkArticleUrlValid()
     if (!valid) {
@@ -343,7 +355,7 @@ export default class ArticleUpdate extends Vue {
         type: '',
       }
     }
-    form.published = published
+    form.published = published || form.published
 
     return form
   }
@@ -353,8 +365,8 @@ export default class ArticleUpdate extends Vue {
 
     ipcRenderer.send('app-post-create', form)
     ipcRenderer.once('app-post-created', (event: Event, data: any) => {
+      this.updatePostSavedStatus()
       this.$message.success(`🎉  ${this.$t('draftSuccess')}`)
-      this.close()
       this.$emit('fetchData')
     })
   }
@@ -364,8 +376,19 @@ export default class ArticleUpdate extends Vue {
 
     ipcRenderer.send('app-post-create', form)
     ipcRenderer.once('app-post-created', (event: Event, data: any) => {
+      this.updatePostSavedStatus()
       this.$message.success(`🎉  ${this.$t('saveSuccess')}`)
-      this.close()
+      this.$emit('fetchData')
+    })
+  }
+
+  normalSavePost() {
+    if (!this.canSubmit) return
+    const form = this.formatForm()
+
+    ipcRenderer.send('app-post-create', form)
+    ipcRenderer.once('app-post-created', (event: Event, data: any) => {
+      this.updatePostSavedStatus()
       this.$emit('fetchData')
     })
   }
@@ -474,6 +497,10 @@ export default class ArticleUpdate extends Vue {
       ])
     }
   }
+
+  openPage(url: string) {
+    shell.openExternal(url)
+  }
 }
 </script>
 
@@ -557,7 +584,7 @@ export default class ArticleUpdate extends Vue {
   }
 }
 .editor-container {
-  padding: 32px;
+  padding: 32px 89px 16px 24px;
   border: 1px solid #e8e8e8;
   background: #ffffff;
   box-shadow: 0 2px 8px rgba(115, 115, 115, 0.08);
@@ -593,5 +620,38 @@ export default class ArticleUpdate extends Vue {
     }
   }
 }
+.footer-info {
+  text-align: center;
+  color: #a5a5a5;
+  font-size: 12px;
+  font-weight: lighter;
+  font-family: -apple-system, 'BlinkMacSystemFont',"PingFang SC",Helvetica,Tahoma,Arial,"Microsoft YaHei",'微软雅黑','黑体','Heiti',sans-serif,'SimSun','宋体',serif;
+  -webkit-font-smoothing: antialiased;
+  margin-top: 16px;
+  .link {
+    color: #a5a5a5;
+    &:hover {
+      color: #101010;
+    }
+  }
+}
 
+.editor-wrapper {
+  width: 760px;
+  margin: 0 auto;
+}
+
+.post-title-container {
+  margin-left: 65px;
+}
+
+.save-tip {
+  padding: 6px 10px;
+  line-height: 22px;
+  font-size: 12px;
+  color: #b7b7b7;
+  position: fixed;
+  left: 0;
+  bottom: 0;
+}
 </style>

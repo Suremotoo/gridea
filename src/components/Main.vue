@@ -38,11 +38,11 @@
       </div>
       <div class="bottom-container">
         <a-button class="preview-btn" icon="eye" block @click="preview">{{ $t('preview') }}</a-button>
-        <a-button class="publish-btn" icon="sync" block type="primary" :loading="publishLoading" @click="publish">{{ $t('syncSite') }}</a-button>
+        <a-button class="sync-btn" icon="sync" block type="primary" :loading="publishLoading" @click="publish">{{ $t('syncSite') }}</a-button>
         <div class="version-container" :class="{ 'version-dot': hasUpdate }">
           <span>v {{ version }}</span>
           <i class="zwicon-web web-btn" @click="goWeb" v-if="site.setting.domain"></i>
-          <a-tooltip title="🌟Star 支持作者！">
+          <a-tooltip :title="`🌟 ${$t('starSupport')}`">
             <a-icon type="github" style="font-size: 14px; cursor: pointer;" @click="openInBrowser('https://github.com/getgridea/gridea')" />
           </a-tooltip>
         </div>
@@ -50,11 +50,23 @@
     </a-layout-sider>
     <a-layout class="right-container">
       <div class="content">
-        <keep-alive>
+        <keep-alive exclude="Loading,Theme">
           <router-view></router-view>
         </keep-alive>
       </div>
     </a-layout>
+
+    <a-modal :visible="syncErrorModalVisible" :footer="null" @cancel="syncErrorModalVisible = false" :maskClosable="false">
+      🙁 {{ $t('syncError1') }} <a @click="openInBrowser('https://gridea.dev/docs/faq.html')">FAQ</a> {{ $t('or') }} <a @click="openInBrowser('https://github.com/getgridea/gridea/issues')">Issues</a> {{ $t('syncError2') }}
+    </a-modal>
+
+    <a-modal title="🔥 New Version" :visible="updateModalVisible" :footer="null" @cancel="updateModalVisible = false" :maskClosable="false">
+      <div class="download-container">
+        👉 <a href="https://gridea.dev">Gridea Homepage</a> | <a href="https://github.com/getgridea/gridea/releases">Github Releases</a> 👈
+      </div>
+      <h2>{{ newVersion }}</h2>
+      <div class="version-info" v-html="updateContent"></div>
+    </a-modal>
   </a-layout>
 </template>
 
@@ -66,6 +78,7 @@ import { State, Action } from 'vuex-class'
 import ISnackbar from '../interfaces/snackbar'
 import { Site } from '../store/modules/site'
 import * as pkg from '../../package.json'
+import markdown from '../server/plugins/markdown'
 
 @Component
 export default class App extends Vue {
@@ -84,6 +97,12 @@ export default class App extends Vue {
   hasUpdate = false
 
   newVersion = ''
+  
+  syncErrorModalVisible = false
+
+  updateModalVisible = false
+
+  updateContent = ''
 
   created() {
     this.$bus.$on('site-reload', () => {
@@ -128,7 +147,7 @@ export default class App extends Vue {
       if (result.success) {
         this.$message.success(`🎉  ${this.$t('syncSuccess')}`)
       } else {
-        this.$message.error(`${this.$t('syncError')}`)
+        this.syncErrorModalVisible = true
       }
       this.publishLoading = false
     })
@@ -150,6 +169,7 @@ export default class App extends Vue {
       this.newVersion = res.data.name
       const latestVersion = res.data.name.substring(1).split('.').map((item: string) => parseInt(item, 10))
       const currentVersion = this.version.split('.').map((item: string) => parseInt(item, 10))
+      this.updateContent = markdown.render(res.data.body)
 
       for (let i = 0; i < currentVersion.length; i += 1) {
         if (currentVersion[i] > latestVersion[i]) {
@@ -163,7 +183,8 @@ export default class App extends Vue {
       }
 
       if (this.hasUpdate) {
-        this.$message.success(`🔥  ${this.$t('newVersionTips')}`, 8)
+        // this.$message.success(`🔥  ${this.$t('newVersionTips')}`, 8)
+        this.updateModalVisible = true
       }
     }
   }
@@ -267,21 +288,23 @@ export default class App extends Vue {
 }
 
 .preview-btn {
-  border-radius: 16px;
-  background: #e8e8e8;
+  border-radius: 20px;
+  background: rgb(249,247,243);
+  background: linear-gradient(180deg, rgba(249,247,243,1) 0%, rgba(255,255,255,1) 100%);
+  transition: all 0.3s;
   &:hover {
-    border: none;
-    background: #c7c7c7;
+    background: linear-gradient(180deg, rgba(255,255,255,1) 0%, rgba(255,255,255,1) 100%);;
   }
 }
 
-.publish-btn {
-  border-radius: 16px;
-  background: #383838;
+.sync-btn {
+  border-radius: 20px;
+  background: linear-gradient(124deg, rgba(65,70,75,1) 0%, rgba(0,0,0,1) 100%);
   color: #bababa;
   border: none;
+  transition: all 0.3s;
   &:hover {
-    background: #252525;
+    background: linear-gradient(124deg, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 100%);
     border: none;
   }
 }
@@ -298,5 +321,76 @@ export default class App extends Vue {
   font-size: 17px;
   margin-right: 8px;
   font-weight: 400;
+}
+
+.version-info {
+  /deep/ code {
+    background-color: rgba(27,31,35,.05);
+    border-radius: 3px;
+    font-size: 85%;
+    margin: 0;
+    padding: .2em .4em;
+  }
+  /deep/ blockquote {
+    border-left: .25em solid #dfe2e5;
+    color: #6a737d;
+    padding: 0 1em;
+  }
+  /deep/ ul, ol {
+    padding: 0;
+    list-style-type: none;
+    font-size: 14px;
+    margin: 30px 20px;
+    
+    ul,
+    ol {
+      margin: 20px 20px 10px;
+    }
+  }
+
+  /deep/ li {
+      line-height: 1.2;
+    }
+
+  /deep/ ul > li {
+      display: table-row;
+      
+      &:before {
+        content:'\25CF';
+        color: #fad849;
+        padding-right: 10px;
+        display: table-cell;
+      }
+      
+      + li:before {
+        padding-top: 10px;
+      }
+    }
+
+  /deep/ ol {
+      counter-reset: ordered-counter;
+      > li {
+        counter-increment: ordered-counter;
+        display: table-row;
+
+        &:before {
+          content: counter(ordered-counter);
+          color: #fad849;
+          padding-right: 10px;
+          display: table-cell;
+          text-align: right;
+        }
+
+        + li:before {
+          padding-top: 10px;
+        }
+      }
+    }
+}
+
+.download-container {
+  text-align: center;
+  padding: 16px 0;
+  background: #fafafa;
 }
 </style>

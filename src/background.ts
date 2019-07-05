@@ -1,7 +1,7 @@
 'use strict'
 
 import {
-  app, protocol, BrowserWindow, ipcMain, Menu, shell,
+  app, protocol, BrowserWindow, Menu, shell,
 } from 'electron'
 import {
   createProtocol,
@@ -13,9 +13,10 @@ const isDevelopment = process.env.NODE_ENV !== 'production'
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
 let win: any
+let menu: Menu
 
 // Standard scheme must be registered before the app is ready
-protocol.registerStandardSchemes(['app'], { secure: true })
+protocol.registerSchemesAsPrivileged([{ scheme: 'app', privileges: { secure: true, standard: true } }])
 function createWindow() {
   // Create the browser window.
   const winOption: any = {
@@ -25,6 +26,7 @@ function createWindow() {
     minWidth: 1000,
     webPreferences: {
       webSecurity: false, // FIXED: Not allowed to load local resource
+      nodeIntegration: true,
     },
     // frame: false, // 去除默认窗口栏
     titleBarStyle: 'hidden' as ('hidden' | 'default' | 'hiddenInset' | 'customButtonsOnHover' | undefined),
@@ -56,6 +58,14 @@ function createWindow() {
     {
       label: 'Edit',
       submenu: [
+        {
+          label: 'Save',
+          accelerator: 'CmdOrCtrl+S',
+          click: () => {
+            win.webContents.send('click-menu-save')
+          },
+        },
+        { type: 'separator' },
         { role: 'undo' },
         { role: 'redo' },
         { type: 'separator' },
@@ -84,7 +94,7 @@ function createWindow() {
     },
   ]
 
-  const menu = Menu.buildFromTemplate(template)
+  menu = Menu.buildFromTemplate(template)
   Menu.setApplicationMenu(menu)
 
   const setting = {

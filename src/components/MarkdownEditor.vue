@@ -163,6 +163,10 @@ export default {
   }
 }
 /deep/ .editor-preview {
+  h1, h2, h3, h4, h5, h6 {
+    margin-top: 3rem;
+    font-weight: 700;
+  }
   code {
     background: #ededeb;
     padding: 0px 4px;
@@ -189,7 +193,7 @@ export default {
     width: 16px;
     height: 16px;
     margin: 4px 0 0;
-    top: 0;
+    top: 3px;
     left: -22px;
     transform-origin: center;
     transform: rotate(-90deg);
@@ -198,13 +202,13 @@ export default {
       transform: rotate(0);
       &:before {
         border: transparent;
-        background-color: #66a80f;
+        background-color: #ef782f;
       }
       &:after {
         transform: rotate(-45deg) scale(1);
       }
       + .task-list-item-label {
-        color: #adb5bd;
+        color: #a0a0a0;
         text-decoration: line-through;
       }
     }
@@ -214,7 +218,7 @@ export default {
       height: 16px;
       box-sizing: border-box;
       display: inline-block;
-      border: 2px solid #ced4da;
+      border: 1px solid #d0d0d0;
       border-radius: 2px;
       background-color: #fff;
       position: absolute;
@@ -227,7 +231,7 @@ export default {
       transform: rotate(-45deg) scale(0);
       width: 9px;
       height: 5px;
-      border: 2px solid #fff;
+      border: 1px solid #fff;
       border-top: none;
       border-right: none;
       position: absolute;
@@ -281,10 +285,14 @@ export default {
   transition: all 0.3s;
   color: #000;
   border: none;
-  font-size: 14px;
+  font-size: 15px;
   letter-spacing: 0.05em;
   padding: 16px 0;
-  line-height: 24px;
+  line-height: 28px;
+}
+
+.CodeMirror pre {
+  line-height: 28px;
 }
 
 .editor-toolbar {
@@ -294,11 +302,12 @@ export default {
   padding: 0;
 }
 .editor-toolbar button.active, .editor-toolbar button:hover {
-  border-color: #d2c7b3;
-  background: #f9f7f3;
+  border-color: #41464b;
+  background: #f8d65f;
+  border-style: dashed;
 }
 .editor-toolbar button {
-  color: #000 !important;
+  color: #41464b !important;
   width: 32px;
   height: 32px;
   border-radius: 2px;
@@ -311,6 +320,7 @@ export default {
 .CodeMirror .editor-preview.markdown-body.editor-preview-active {
   background: #fff;
   padding: 16px 0;
+  padding-left: 65px;
 }
 .CodeMirror .editor-preview.markdown-body.editor-preview-active img {
   max-width: 100%;
@@ -328,7 +338,8 @@ export default {
   .cm-formatting,
   .cm-formatting-header,
   .cm-formatting-strong,
-  .cm-formatting-link {
+  .cm-formatting-link,
+  .cm-hr {
     // color: rgba(0,0,0,.28);
     color: #efb73f;
     font-weight: normal;
@@ -339,37 +350,34 @@ export default {
   .cm-formatting-list-ul {
     padding-left: 16px;
   }
-  .cm-header-1 {
-    font-size: 28px;
-    line-height: 36px;
+  .cm-header-1,
+  .cm-header-2,
+  .cm-header-3,
+  .cm-header-4,
+  .cm-header-5,
+  .cm-header-6 {
+    font-size: 15px;
+    line-height: 28px;
     padding: 7px 0;
     position: relative;
   }
-  .cm-header-2 {
-    font-size: 24px;
-    line-height: 32px;
-    padding: 7px 0;
+  .cm-formatting-header-1 {
+    margin-left: -14.75px;
   }
-  .cm-header-3 {
-    font-size: 20px;
-    line-height: 28px;
-    padding: 7px 0;
+  .cm-formatting-header-2 {
+    margin-left: -24.75px;
   }
-  .cm-header-4 {
-    font-size: 16px;
-    line-height: 24px;
-    padding: 7px 0;
+  .cm-formatting-header-3 {
+    margin-left: -34.75px;
   }
-  .cm-header-5 {
-    font-size: 14px;
-    line-height: 24px;
-    padding: 7px 0;
+  .cm-formatting-header-4 {
+    margin-left: -44.75px;
   }
-  .cm-header-6 {
-    font-size: 14px;
-    line-height: 24px;
-    padding: 7px 0;
-    font-weight: normal;
+  .cm-formatting-header-5 {
+    margin-left: -54.75px;
+  }
+  .cm-formatting-header-6 {
+    margin-left: -64.75px;
   }
   
   .cm-quote {
@@ -391,5 +399,14 @@ export default {
   .cm-comment.cm-formatting-code {
     background: none;
   }
+}
+
+.editor-statusbar {
+  color: #6669;
+  font-weight: lighter;
+}
+
+.CodeMirror-sizer {
+  margin-left: 65px !important;
 }
 </style>
