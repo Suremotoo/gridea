@@ -41,6 +41,17 @@ export interface ITagRenderData extends ITag {
   link: string
 }
 
+export interface ISiteTagsData extends ITagRenderData {
+  count: number
+}
+
+export interface IStats {
+  text: string
+  minutes: number
+  time: number
+  words: number
+}
+
 export interface IPostRenderData {
   content: string
   fileName: string
@@ -52,5 +63,6 @@ export interface IPostRenderData {
   feature: string
   link: string
   hideInList: boolean
-  toc?: any,
+  toc?: any
+  stats: IStats
 }
