@@ -32,12 +32,12 @@ export default class App extends Vue {
   /* Global CSS */
   body {
     background: #fff;
-    color: #41464b;
+    color: #555;
   }
 
   ::-webkit-scrollbar{
-    width: 8px;
-    height: 6px;
+    width: 4px;
+    height: 4px;
     border-radius: 4px;
     background-color: #fff;
 
@@ -77,6 +77,6 @@ export default class App extends Vue {
   }
 
   .application {
-    font-family: system-ui,-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Oxygen,Ubuntu,Cantarell,Droid Sans,Helvetica Neue,Fira Sans,sans-serif!important;
+    font-family: PingFang SC,-apple-system,SF UI Text,Lucida Grande,STheiti,Microsoft YaHei,sans-serif !important;
   }
 </style>

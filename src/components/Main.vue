@@ -6,44 +6,40 @@
     >
       <div class="top-container">
         <div class="logo">
-          <img class="img" src="@/assets/logo-hey.png">
-          <h3>Gridea</h3>
+          <img class="img" src="@/assets/logo.png">
         </div>
-        <a-menu mode="inline" :defaultSelectedKeys="['articles']" @click="clickMenu">
-          <a-menu-item key="articles">
-            <i class="zwicon-document menu-icon"></i>
-            <span class="nav-text">{{ $t('article') }}</span>
-          </a-menu-item>
-          <a-menu-item key="menu">
-            <i class="zwicon-grid menu-icon"></i>
-            <span class="nav-text">{{ $t('menu') }}</span>
-          </a-menu-item>
-          <a-menu-item key="tags">
-            <i class="zwicon-price-tag menu-icon"></i>
-            <span class="nav-text">{{ $t('tag') }}</span>
-          </a-menu-item>
-          <a-menu-item key="theme">
-            <i class="zwicon-image-wide menu-icon"></i>
-            <span class="nav-text">{{ $t('theme') }}</span>
-          </a-menu-item>
-          <a-menu-item key="setting">
-            <i class="zwicon-cog menu-icon"></i>
-            <span class="nav-text">{{ $t('setting') }}</span>
-          </a-menu-item>
-          <a-menu-item key="system">
-            <i class="zwicon-desktop menu-icon"></i>
-            <span class="nav-text">{{ $t('system') }}</span>
+        <a-menu mode="inline" :defaultSelectedKeys="['/articles']" @click="clickMenu">
+          <a-menu-item :key="menu.router" v-for="menu in sideMenus">
+            <div class="menu-item">
+              <div class="flex items-center">
+                <i
+                  class="mr-2 text-base"
+                  :class="{ [menu.icon]: true }"
+                  :style="{ color: currentRouter === menu.router ? '#f9d757' : 'inherit' }"
+                ></i>
+                <span class="nav-text">{{ menu.text }}</span>
+              </div>
+              <span class="number">{{ menu.count }}</span>
+            </div>
           </a-menu-item>
         </a-menu>
       </div>
       <div class="bottom-container">
-        <a-button class="preview-btn" icon="eye" block @click="preview">{{ $t('preview') }}</a-button>
-        <a-button class="sync-btn" icon="sync" block type="primary" :loading="publishLoading" @click="publish">{{ $t('syncSite') }}</a-button>
+        <a-button class="preview-btn" block @click="preview">
+          <i class="zwicon-eye"></i>
+          {{ $t('preview') }}
+        </a-button>
+        <a-button class="sync-btn" block type="primary" :loading="publishLoading" @click="publish">
+          <template v-if="!publishLoading">
+            <i class="zwicon-deploy"></i>
+            {{ $t('syncSite') }}
+          </template>
+        </a-button>
         <div class="version-container" :class="{ 'version-dot': hasUpdate }">
-          <span>v {{ version }}</span>
-          <i class="zwicon-web web-btn" @click="goWeb" v-if="site.setting.domain"></i>
+          <i class="ri-equalizer-line text-base" @click="systemModalVisible = true"></i>
+          <i class="ri-earth-line web-btn" @click="goWeb" v-if="site.setting.domain"></i>
           <a-tooltip :title="`🌟 ${$t('starSupport')}`">
-            <a-icon type="github" style="font-size: 14px; cursor: pointer;" @click="openInBrowser('https://github.com/getgridea/gridea')" />
+            <i class="ri-github-line text-base" @click="handleGithubClick"></i>
           </a-tooltip>
         </div>
       </div>
@@ -57,7 +53,7 @@
     </a-layout>
 
     <a-modal :visible="syncErrorModalVisible" :footer="null" @cancel="syncErrorModalVisible = false" :maskClosable="false">
-      🙁 {{ $t('syncError1') }} <a @click="openInBrowser('https://gridea.dev/docs/faq.html')">FAQ</a> {{ $t('or') }} <a @click="openInBrowser('https://github.com/getgridea/gridea/issues')">Issues</a> {{ $t('syncError2') }}
+      🙁 {{ $t('syncError1') }} <a @click="openInBrowser('https://gridea.dev/')">FAQ</a> {{ $t('or') }} <a @click="openInBrowser('https://github.com/getgridea/gridea/issues')">Issues</a> {{ $t('syncError2') }}
     </a-modal>
 
     <a-modal title="🔥 New Version" :visible="updateModalVisible" :footer="null" @cancel="updateModalVisible = false" :maskClosable="false">
@@ -67,20 +63,48 @@
       <h2>{{ newVersion }}</h2>
       <div class="version-info" v-html="updateContent"></div>
     </a-modal>
+
+    <!-- <a-modal :width="900" :visible="systemModalVisible" :footer="null" @cancel="systemModalVisible = false">
+      <app-system />
+    </a-modal> -->
+
+    <a-modal :width="900" :visible="logModalVisible" :footer="null" @cancel="logModalVisible = false">
+      <h2>{{ log.type }}</h2>
+      <pre>
+        {{ log.message }}
+      </pre>
+    </a-modal>
+
+    <a-drawer
+      title=""
+      placement="bottom"
+      height="100%"
+      @close="systemModalVisible = false"
+      :visible="systemModalVisible"
+    >
+      <app-system />
+    </a-drawer>
+
   </a-layout>
 </template>
 
 <script lang="ts">
-import { ipcRenderer, Event, shell } from 'electron'
+import { ipcRenderer, IpcRendererEvent, shell } from 'electron'
 import { Vue, Component } from 'vue-property-decorator'
 import axios from 'axios'
 import { State, Action } from 'vuex-class'
+import AppSystem from './AppSystem/Index.vue'
 import ISnackbar from '../interfaces/snackbar'
 import { Site } from '../store/modules/site'
 import * as pkg from '../../package.json'
 import markdown from '../server/plugins/markdown'
+import ga from '../helpers/analytics'
 
-@Component
+@Component({
+  components: {
+    AppSystem,
+  },
+})
 export default class App extends Vue {
   @State('site') site!: Site
 
@@ -101,14 +125,85 @@ export default class App extends Vue {
   syncErrorModalVisible = false
 
   updateModalVisible = false
+  
+  systemModalVisible = false
 
   updateContent = ''
+
+  logModalVisible = false
+
+  log: any = {}
+
+  get currentRouter() {
+    return this.$route.path
+  }
+  
+  get sideMenus() {
+    return [
+      {
+        icon: 'ri-article-line',
+        text: this.$t('article'),
+        count: this.site.posts.length,
+        router: '/articles',
+      },
+      {
+        icon: 'ri-menu-2-line',
+        text: this.$t('menu'),
+        count: this.site.menus.length,
+        router: '/menu',
+      },
+      {
+        icon: 'ri-price-tag-3-line',
+        text: this.$t('tag'),
+        count: this.site.tags.length,
+        router: '/tags',
+      },
+      {
+        icon: 'ri-t-shirt-line',
+        text: this.$t('theme'),
+        router: '/theme',
+      },
+      {
+        icon: 'ri-server-line',
+        text: this.$t('remote'),
+        router: '/setting',
+      },
+    ]
+  }
 
   created() {
     this.$bus.$on('site-reload', () => {
       this.reloadSite()
     })
     this.checkUpdate()
+
+    ipcRenderer.on(('log-error'), (event: any, result: any) => {
+      this.log = result
+      this.logModalVisible = true
+    })
+  }
+
+  mounted() {
+    // @see https://docs.headwayapp.co/widget for more configuration options.
+    const config = {
+      selector: '.version-container',
+      account: 'xbrnVx',
+      translations: {
+        title: 'Gridea News',
+        readMore: 'Read more',
+        labels: {
+          'new': 'News',
+          'improvement': 'Updates',
+          'fix': 'Fixes',
+        },
+        footer: 'Read more 👉',
+      },
+    }
+    // @ts-ignore
+    if (window.Headway) {
+      // @ts-ignore
+      Headway.init(config)
+    }
   }
 
   clickMenu(e: any) {
@@ -119,7 +214,7 @@ export default class App extends Vue {
     const siteFolder = localStorage.getItem('sourceFolder') || ''
 
     ipcRenderer.send('app-site-reload', { siteFolder })
-    ipcRenderer.once('app-site-loaded', (event: Event, result: Site) => {
+    ipcRenderer.once('app-site-loaded', (event: IpcRendererEvent, result: Site) => {
       console.log(result)
       this.updateSite(result)
     })
@@ -127,9 +222,21 @@ export default class App extends Vue {
 
   public preview() {
     ipcRenderer.send('html-render')
-    ipcRenderer.once('html-rendered', (event: Event, result: any) => {
+
+    ga.event('Preview', 'Preview - start', { evLabel: this.site.setting.domain })
+
+    ipcRenderer.once('html-rendered', (event: IpcRendererEvent, result: any) => {
       this.$message.success(`🎉  ${this.$t('renderSuccess')}`)
-      this.openInBrowser(`file://${this.site.appDir}/output/index.html`)
+
+      ga.event('Preview', 'Preview - success', { evLabel: this.site.setting.domain })
+
+      ipcRenderer.send('app-preview-server-port-get')
+      ipcRenderer.once(
+        'app-preview-server-port-got',
+        (portGotEvent: IpcRendererEvent, port: any) => {
+          this.openInBrowser(`http://localhost:${port}`)
+        },
+      )
     })
   }
 
@@ -142,12 +249,19 @@ export default class App extends Vue {
 
     ipcRenderer.send('site-publish')
     this.publishLoading = true
-    ipcRenderer.once('site-published', (event: Event, result: any) => {
+
+    ga.event('Publish', 'Publish - start', { evLabel: this.site.setting.domain })
+
+    ipcRenderer.once('site-published', (event: IpcRendererEvent, result: any) => {
       console.log(result)
       if (result.success) {
         this.$message.success(`🎉  ${this.$t('syncSuccess')}`)
+
+        ga.event('Publish', 'Publish - success', { evLabel: this.site.setting.domain })
       } else {
         this.syncErrorModalVisible = true
+
+        ga.event('Publish', 'Publish - failed', { evLabel: this.site.setting.domain })
       }
       this.publishLoading = false
     })
@@ -159,8 +273,16 @@ export default class App extends Vue {
 
   goWeb() {
     if (this.site.setting.domain) {
+      ga.event('Client', 'Client - open-web', { evLabel: this.site.setting.domain })
+
       shell.openExternal(this.site.setting.domain)
     }
+  }
+
+  handleGithubClick() {
+    ga.event('Client', 'Client - open-github', {})
+
+    this.openInBrowser('https://github.com/getgridea/gridea')
   }
 
   public async checkUpdate() {
@@ -226,7 +348,11 @@ export default class App extends Vue {
 
 /deep/ .ant-menu {
   background: @primary-bg;
-  color: @primary-color;
+  @apply text-gray-500;
+}
+
+/deep/ .ant-menu-item {
+  padding-left: 16px !important;
 }
 
 /deep/ .ant-menu-vertical .ant-menu-item:after, .ant-menu-vertical-left .ant-menu-item:after, .ant-menu-vertical-right .ant-menu-item:after, .ant-menu-inline .ant-menu-item:after {
@@ -234,7 +360,9 @@ export default class App extends Vue {
 }
 
 /deep/ .ant-menu:not(.ant-menu-horizontal) .ant-menu-item-selected {
-  background-color: #efebe3;
+  background-color: #fff;
+  // @apply shadow;
+  color: #000;
 }
 
 /deep/ .ant-menu-inline, .ant-menu-vertical, .ant-menu-vertical-left {
@@ -250,7 +378,7 @@ export default class App extends Vue {
 .bottom-container {
   padding: 24px 32px 8px;
   button {
-    margin: 4px 0;
+    margin: 8px 0;
   }
 }
 
@@ -289,11 +417,10 @@ export default class App extends Vue {
 
 .preview-btn {
   border-radius: 20px;
-  background: rgb(249,247,243);
-  background: linear-gradient(180deg, rgba(249,247,243,1) 0%, rgba(255,255,255,1) 100%);
+  background: #fff;
   transition: all 0.3s;
   &:hover {
-    background: linear-gradient(180deg, rgba(255,255,255,1) 0%, rgba(255,255,255,1) 100%);;
+    background: #fafafa;
   }
 }
 
@@ -314,6 +441,18 @@ export default class App extends Vue {
   cursor: pointer;
   &:hover {
     color: @link-color;
+  }
+}
+
+.nav-text {
+  font-weight: normal;
+}
+
+.menu-item {
+  display: flex;
+  justify-content: space-between;
+  .number {
+    font-weight: lighter;
   }
 }
 

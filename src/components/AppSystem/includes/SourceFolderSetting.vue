@@ -1,14 +1,13 @@
 <template>
-  <div>
+  <div class="mb-4 py-4 border-b border-gray-200">
+    <div class="text-base font-medium mb-4">{{ $t('sourceFolder') }}</div>
     <a-form>
-      <a-form-item label=" " :labelCol="formLayout.label" :wrapperCol="formLayout.wrapper" :colon="false">
+      <a-form-item :labelCol="formLayout.label" :wrapperCol="formLayout.wrapper" :colon="false">
         <a-input v-model="currentFolderPath" read-only>
-          <a-upload slot="addonAfter" action="" directory :beforeUpload="handleFolderChange" :showUploadList="false">
-            <a-icon class="folder-btn" type="folder-open" />
-          </a-upload>
+          <i slot="addonAfter" class="zwicon-folder-open px-2" @click="handleFolderSelect"></i>
         </a-input>
       </a-form-item>
-      <a-form-item label=" " :labelCol="formLayout.label" :wrapperCol="formLayout.wrapper" :colon="false">
+      <a-form-item :labelCol="formLayout.label" :wrapperCol="formLayout.wrapper" :colon="false">
         <a-button type="primary" @click="save">{{ $t('save') }}</a-button>
       </a-form-item>
     </a-form>
@@ -16,7 +15,9 @@
 </template>
 
 <script lang="ts">
-import { ipcRenderer, Event, remote } from 'electron'
+import {
+  ipcRenderer, IpcRendererEvent, remote,
+} from 'electron'
 import { Vue, Component } from 'vue-property-decorator'
 import { State } from 'vuex-class'
 
@@ -37,20 +38,25 @@ export default class System extends Vue {
 
   save() {
     ipcRenderer.send('app-source-folder-setting', this.currentFolderPath)
-    ipcRenderer.once('app-source-folder-set', (event: Event, data: any) => {
+    ipcRenderer.once('app-source-folder-set', (event: IpcRendererEvent, data: any) => {
       if (data) {
         this.$message.success(this.$t('saved'))
         this.$bus.$emit('site-reload')
-        remote.getCurrentWindow().reload()
+        remote.app.relaunch()
+        remote.app.quit()
       } else {
         this.$message.error(this.$t('saveError'))
       }
     })
   }
 
-  handleFolderChange(data: any) {
-    this.currentFolderPath = data.path.replace(/\\/g, '/')
-    return false
+  async handleFolderSelect() {
+    const res = await remote.dialog.showOpenDialog({
+      properties: ['openDirectory', 'createDirectory'],
+    })
+    if (res.filePaths.length > 0) {
+      this.currentFolderPath = res.filePaths[0].replace(/\\/g, '/')
+    }
   }
 }
 </script>
